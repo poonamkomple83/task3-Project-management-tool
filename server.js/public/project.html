@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Project Management Tool</title>
+
+    <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f7fb;
+            color: #222;
+        }
+
+        header {
+            background: #172b4d;
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 22px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 6px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .notification-btn {
+            background: transparent;
+            color: white;
+            font-size: 22px;
+            position: relative;
+        }
+
+        #notificationCount {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            padding: 3px 6px;
+            display: none;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            margin: 25px auto;
+        }
+
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+            color: #172b4d;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 11px;
+            margin-bottom: 10px;
+            border: 1px solid #ccd6e0;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #2563eb;
+        }
+
+        .primary-btn {
+            background: #2563eb;
+            color: white;
+        }
+
+        .success-btn {
+            background: #20a37a;
+            color: white;
+        }
+
+        .danger-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .warning-btn {
+            background: #f0ad4e;
+            color: white;
+        }
+
+        .info-btn {
+            background: #1683c7;
+            color: white;
+        }
+
+        .project-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .project-item {
+            border: 1px solid #b9c7d8;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .project-item:hover {
+            background: #eef5ff;
+        }
+
+        .project-item.active {
+            background: #e4efff;
+            border-color: #2563eb;
+        }
+
+        .project-item h3 {
+            margin-bottom: 5px;
+        }
+
+        .project-description {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .members-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .member {
+            border: 1px solid #ccd6e0;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f8fafc;
+            min-width: 180px;
+        }
+
+        .member strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .member small {
+            color: #666;
+        }
+
+        .board-wrapper {
+            overflow-x: auto;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(280px, 1fr));
+            gap: 15px;
+            min-width: 900px;
+        }
+
+        .column {
+            background: #e8eef5;
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 350px;
+        }
+
+        .column h3 {
+            margin-bottom: 12px;
+            padding: 8px;
+        }
+
+        .todo-title {
+            color: #444;
+        }
+
+        .progress-title {
+            color: #805ad5;
+        }
+
+        .completed-title {
+            color: #16865a;
+        }
+
+        .task {
+            background: white;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .task h4 {
+            margin-bottom: 8px;
+            font-size: 17px;
+        }
+
+        .task-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .high {
+            background: #ffd6d6;
+            color: #a30000;
+        }
+
+        .medium {
+            background: #fff0c2;
+            color: #795600;
+        }
+
+        .low {
+            background: #d8f5df;
+            color: #176b2f;
+        }
+
+        .task-info {
+            font-size: 13px;
+            margin: 5px 0;
+        }
+
+        .task-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .task-buttons button {
+            font-size: 12px;
+            padding: 7px 9px;
+        }
+
+        .comments {
+            margin-top: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+
+        .comment {
+            background: #f3f5f7;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 7px;
+            font-size: 13px;
+        }
+
+        .comment strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .comment small {
+            color: #777;
+        }
+
+        .comment-input {
+            margin-top: 8px;
+        }
+
+        .comment-btn {
+            background: #1683c7;
+            color: white;
+        }
+
+        .notification-panel {
+            position: fixed;
+            top: 65px;
+            right: 20px;
+            width: 350px;
+            max-height: 450px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            z-index: 200;
+            display: none;
+        }
+
+        .notification-header {
+            padding: 15px;
+            background: #172b4d;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .notification {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .notification.unread {
+            background: #eef5ff;
+        }
+
+        .notification small {
+            color: #777;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .notification-actions {
+            margin-top: 7px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .notification-actions button {
+            font-size: 11px;
+            padding: 5px 8px;
+        }
+
+        .empty {
+            color: #777;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 300;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            margin: 8% auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .close {
+            font-size: 25px;
+            cursor: pointer;
+        }
+
+        .selected-project-title {
+            margin-bottom: 15px;
+            color: #172b4d;
+        }
+
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .message.success {
+            display: block;
+            background: #d8f5df;
+            color: #176b2f;
+        }
+
+        .message.error {
+            display: block;
+            background: #ffd6d6;
+            color: #a30000;
+        }
+
+        @media (max-width: 800px) {
+            .top-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-right {
+                gap: 5px;
+            }
+
+            header h1 {
+                font-size: 16px;
+            }
+
+            .notification-panel {
+                width: 90%;
+                right: 5%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>📋 Project Management Tool</h1>
+
+    <div class="header-right">
+        <span id="userName">User</span>
+
+        <button class="notification-btn" onclick="toggleNotifications()">
+            🔔
+            <span id="notificationCount">0</span>
+        </button>
+
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</header>
+
+
+<!-- NOTIFICATION PANEL -->
+<div class="notification-panel" id="notificationPanel">
+
+    <div class="notification-header">
+        <strong>🔔 Notifications</strong>
+        <button
+            onclick="clearNotifications()"
+            style="background:#e74c3c;color:white;padding:5px 8px;">
+            Clear
+        </button>
+    </div>
+
+    <div id="notificationsList">
+        <div class="empty">No notifications</div>
+    </div>
+
+</div>
+
+
+<div class="container">
+
+    <!-- TOP SECTION -->
+    <div class="top-grid">
+
+        <!-- PROJECTS -->
+        <div class="card">
+
+            <h2>📁 My Projects</h2>
+
+            <div id="projectsList" class="project-list">
+                <div class="empty">Loading projects...</div>
+            </div>
+
+        </div>
+
+
+        <!-- PROJECT DETAILS -->
+        <div class="card">
+
+            <h2>➕ Create Project</h2>
+
+            <input
+                type="text"
+                id="projectName"
+                placeholder="Project name">
+
+            <textarea
+                id="projectDescription"
+                placeholder="Project description"></textarea>
+
+            <button
+                class="primary-btn"
+                onclick="createProject()">
+                Create Project
+            </button>
+
+            <div id="projectMessage" class="message"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SELECTED PROJECT -->
+    <div class="card">
+
+        <h2 class="selected-project-title">
+            📌 <span id="selectedProjectName">Select a project</span>
+        </h2>
+
+        <p id="selectedProjectDescription">
+            Select a project from the list above.
+        </p>
+
+    </div>
+
+
+    <!-- TEAM MEMBERS -->
+    <div class="card">
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
+        ">
+
+            <h2>👥 Team Members</h2>
+
+            <button
+                class="primary-btn"
+                onclick="openMemberModal()">
+                ➕ Add Member
+            </button>
+
+        </div>
+
+        <div id="membersList" class="members-list">
+            <div class="empty">
+                Select a project to view team members.
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ADD TASK -->
+    <div class="card">
+
+        <h2>➕ Add Task</h2>
+
+        <input
+            type="text"
+            id="taskTitle"
+            placeholder="Task title">
+
+        <textarea
+            id="taskDescription"
+            placeholder="Task description"></textarea>
+
+        <select id="taskAssignedTo">
+            <option value="">Assign to...</option>
+        </select>
+
+        <select id="taskPriority">
+
+            <option value="Low">Low</option>
+
+            <option value="Medium" selected>
+                Medium
+            </option>
+
+            <option value="High">High</option>
+
+        </select>
+
+        <label>Due Date</label>
+
+        <input
+            type="date"
+            id="taskDueDate">
+
+        <button
+            class="primary-btn"
+            onclick="createTask()">
+            Add Task
+        </button>
+
+        <div id="taskMessage" class="message"></div>
+
+    </div>
+
+
+    <!-- TASK BOARD -->
+    <div class="card">
+
+        <h2>
+            📌 Task Board —
+            <span id="boardProjectName">
+                Select Project
+            </span>
+        </h2>
+
+        <div class="board-wrapper">
+
+            <div class="board">
+
+                <!-- TODO -->
+                <div class="column">
+
+                    <h3 class="todo-title">
+                        📝 To Do
+                    </h3>
+
+                    <div id="todoTasks"></div>
+
+                </div>
+
+
+                <!-- IN PROGRESS -->
+                <div class="column">
+
+                    <h3 class="progress-title">
+                        ⚙️ In Progress
+                    </h3>
+
+                    <div id="progressTasks"></div>
+
+                </div>
+
+
+                <!-- COMPLETED -->
+                <div class="column">
+
+                    <h3 class="completed-title">
+                        ✅ Completed
+                    </h3>
+
+                    <div id="completedTasks"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ADD MEMBER MODAL -->
+<div class="modal" id="memberModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>👥 Add Team Member</h2>
+
+            <span
+                class="close"
+                onclick="closeMemberModal()">
+                &times;
+            </span>
+
+        </div>
+
+        <p style="margin-bottom:12px;color:#666;">
+            Select a user to add to this project.
+        </p>
+
+        <select id="memberSelect">
+            <option value="">
+                Select user
+            </option>
+        </select>
+
+        <button
+            class="primary-btn"
+            onclick="addMember()">
+            Add Member
+        </button>
+
+        <div
+            id="memberMessage"
+            class="message">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- EDIT TASK MODAL -->
+<div class="modal" id="editTaskModal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>✏️ Edit Task</h2>
+
+            <span
+                class="close"
+                onclick="closeEditTaskModal()">
+                &times;
+            </span>
+
+        </div>
+
+        <input
+            type="hidden"
+            id="editTaskId">
+
+        <input
+            type="text"
+            id="editTaskTitle"
+            placeholder="Task title">
+
+        <textarea
+            id="editTaskDescription"
+            placeholder="Task description"></textarea>
+
+        <select id="editTaskAssignedTo">
+            <option value="">
+                Unassigned
+            </option>
+        </select>
+
+        <select id="editTaskPriority">
+
+            <option value="Low">
+                Low
+            </option>
+
+            <option value="Medium">
+                Medium
+            </option>
+
+            <option value="High">
+                High
+            </option>
+
+        </select>
+
+        <label>Due Date</label>
+
+        <input
+            type="date"
+            id="editTaskDueDate">
+
+        <button
+            class="primary-btn"
+            onclick="updateTask()">
+            Save Changes
+        </button>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    let currentUser = null;
+    let projects = [];
+    let selectedProject = null;
+    let users = [];
+    let tasks = [];
+
+    const socket = io();
+
+
+    // =========================
+    // INITIAL LOAD
+    // =========================
+
+    async function init() {
+
+        try {
+
+            const meResponse =
+                await fetch("/api/me");
+
+            if (!meResponse.ok) {
+
+                window.location.href = "/login";
+                return;
+            }
+
+            const meData =
+                await meResponse.json();
+
+            currentUser = meData.user;
+
+            document.getElementById("userName").textContent =
+                currentUser.name;
+
+            socket.emit(
+                "join_user",
+                currentUser.id
+            );
+
+            await loadProjects();
+            await loadUsers();
+            await loadNotifications();
+
+            selectProjectFromURL();
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert("Something went wrong.");
+
+        }
+
+    }
+
+
+    // =========================
+    // PROJECTS
+    // =========================
+
+    async function loadProjects() {
+
+        const response =
+            await fetch("/api/projects");
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+
+            document.getElementById("projectsList").innerHTML =
+                `<div class="empty">${data.message}</div>`;
+
+            return;
+        }
+
+        projects = data.projects;
+
+        renderProjects();
+
+    }
+
+
+    function renderProjects() {
+
+        const container =
+            document.getElementById("projectsList");
+
+        if (projects.length === 0) {
+
+            container.innerHTML =
+                `<div class="empty">No projects yet.</div>`;
+
+            return;
+        }
+
+        container.innerHTML = "";
+
+        projects.forEach(project => {
+
+            const div =
+                document.createElement("div");
+
+            div.className = "project-item";
+
+            if (
+                selectedProject &&
+                selectedProject.id === project.id
+            ) {
+
+                div.classList.add("active");
+
+            }
+
+            div.innerHTML = `
+
+                <h3>📁 ${escapeHTML(project.name)}</h3>
+
+                <div class="project-description">
+                    ${escapeHTML(project.description || "No description")}
+                </div>
+
+            `;
+
+            div.onclick = () => {
+
+                selectProject(project);
+
+            };
+
+            container.appendChild(div);
+
+        });
+
+    }
+
+
+    function selectProjectFromURL() {
+
+        const params =
+            new URLSearchParams(window.location.search);
+
+        const projectId =
+            params.get("id") ||
+            params.get("project_id");
+
+        if (projectId) {
+
+            const project =
+                projects.find(
+                    p => p.id == projectId
+                );
+
+            if (project) {
+
+                selectProject(project);
+                return;
+
+            }
+
+        }
+
+        if (projects.length > 0) {
+
+            selectProject(projects[0]);
+
+        }
+
+    }
+
+
+    function selectProject(project) {
+
+        selectedProject = project;
+
+        document.getElementById(
+            "selectedProjectName"
+        ).textContent = project.name;
+
+        document.getElementById(
+            "selectedProjectDescription"
+        ).textContent =
+            project.description || "No description";
+
+        document.getElementById(
+            "boardProjectName"
+        ).textContent = project.name;
+
+        renderProjects();
+
+        loadProjectMembers();
+        loadTasks();
+
+    }
+
+
+    async function createProject() {
+
+        const name =
+            document.getElementById("projectName").value.trim();
+
+        const description =
+            document.getElementById("projectDescription").value.trim();
+
+        if (!name) {
+
+            showMessage(
+                "projectMessage",
+                "Project name is required.",
+                "error"
+            );
+
+            return;
+        }
+
+        const response =
+            await fetch("/api/projects", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    name,
+                    description
+                })
+
+            });
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+
+            showMessage(
+                "projectMessage",
+                data.message,
+                "error"
+            );
+
+            return;
+        }
+
+        document.getElementById("projectName").value = "";
+        document.getElementById("projectDescription").value = "";
+
+        showMessage(
+            "projectMessage",
+            "Project created successfully.",
+            "success"
+        );
+
+        await loadProjects();
+
+        const newProject =
+            projects.find(
+                p => p.id == data.projectId
+            );
+
+        if (newProject) {
+
+            selectProject(newProject);
+
+        }
+
+    }
+
+
+    // =========================
+    // USERS
+    // =========================
+
+    async function loadUsers() {
+
+        const response =
+            await fetch("/api/users");
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+            return;
+        }
+
+        users = data.users;
+
+        fillUserSelects();
+
+    }
+
+
+    function fillUserSelects() {
+
+        const taskSelect =
+            document.getElementById("taskAssignedTo");
+
+        const editSelect =
+            document.getElementById("editTaskAssignedTo");
+
+        const memberSelect =
+            document.getElementById("memberSelect");
+
+        taskSelect.innerHTML =
+            `<option value="">Assign to...</option>`;
+
+        editSelect.innerHTML =
+            `<option value="">Unassigned</option>`;
+
+        memberSelect.innerHTML =
+            `<option value="">Select user</option>`;
+
+
+        users.forEach(user => {
+
+            const option1 =
+                document.createElement("option");
+
+            option1.value = user.id;
+
+            option1.textContent =
+                `${user.name} (${user.email})`;
+
+            taskSelect.appendChild(option1);
+
+
+            const option2 =
+                document.createElement("option");
+
+            option2.value = user.id;
+
+            option2.textContent =
+                `${user.name} (${user.email})`;
+
+            editSelect.appendChild(option2);
+
+
+            if (
+                currentUser &&
+                user.id !== currentUser.id
+            ) {
+
+                const option3 =
+                    document.createElement("option");
+
+                option3.value = user.id;
+
+                option3.textContent =
+                    `${user.name} (${user.email})`;
+
+                memberSelect.appendChild(option3);
+
+            }
+
+        });
+
+    }
+
+
+    // =========================
+    // MEMBERS
+    // =========================
+
+    function openMemberModal() {
+
+        if (!selectedProject) {
+
+            alert("Please select a project first.");
+            return;
+
+        }
+
+        document.getElementById(
+            "memberModal"
+        ).style.display = "block";
+
+        document.getElementById(
+            "memberMessage"
+        ).className = "message";
+
+    }
+
+
+    function closeMemberModal() {
+
+        document.getElementById(
+            "memberModal"
+        ).style.display = "none";
+
+    }
+
+
+    async function loadProjectMembers() {
+
+        if (!selectedProject) {
+            return;
+        }
+
+        const container =
+            document.getElementById("membersList");
+
+        container.innerHTML =
+            `<div class="empty">Loading members...</div>`;
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/projects/${selectedProject.id}/members`
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok || !data.success) {
+
+                container.innerHTML =
+                    `<div class="empty">
+                        ${data.message || "Failed to load members."}
+                    </div>`;
+
+                return;
+            }
+
+            const members =
+                data.members || [];
+
+            if (members.length === 0) {
+
+                container.innerHTML =
+                    `<div class="empty">
+                        No team members added yet.
+                    </div>`;
+
+                return;
+            }
+
+            container.innerHTML = "";
+
+            members.forEach(member => {
+
+                const div =
+                    document.createElement("div");
+
+                div.className = "member";
+
+                div.innerHTML = `
+
+                    <strong>👤 ${escapeHTML(member.name)}</strong>
+
+                    <small>
+                        ${escapeHTML(member.email)}
+                    </small>
+
+                `;
+
+                container.appendChild(div);
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+            container.innerHTML =
+                `<div class="empty">
+                    Could not load team members.
+                </div>`;
+
+        }
+
+    }
+
+
+    async function addMember() {
+
+        if (!selectedProject) {
+
+            alert("Please select a project first.");
+            return;
+
+        }
+
+        const userId =
+            document.getElementById(
+                "memberSelect"
+            ).value;
+
+        if (!userId) {
+
+            showMessage(
+                "memberMessage",
+                "Please select a user.",
+                "error"
+            );
+
+            return;
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/projects/${selectedProject.id}/members`,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            user_id: Number(userId)
+                        })
+
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            if (!response.ok || !data.success) {
+
+                showMessage(
+                    "memberMessage",
+                    data.message || "Failed to add member.",
+                    "error"
+                );
+
+                return;
+            }
+
+            showMessage(
+                "memberMessage",
+                data.message || "Member added successfully.",
+                "success"
+            );
+
+            document.getElementById(
+                "memberSelect"
+            ).value = "";
+
+            await loadProjectMembers();
+
+            setTimeout(() => {
+
+                closeMemberModal();
+
+            }, 800);
+
+        } catch (error) {
+
+            console.error(error);
+
+            showMessage(
+                "memberMessage",
+                "Failed to add member.",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    // =========================
+    // TASKS
+    // =========================
+
+    async function loadTasks() {
+
+        if (!selectedProject) {
+            return;
+        }
+
+        const response =
+            await fetch(
+                `/api/tasks?project_id=${selectedProject.id}`
+            );
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+
+            console.error(data.message);
+            return;
+
+        }
+
+        tasks = data.tasks;
+
+        renderTasks();
+
+    }
+
+
+    function renderTasks() {
+
+        document.getElementById("todoTasks").innerHTML = "";
+        document.getElementById("progressTasks").innerHTML = "";
+        document.getElementById("completedTasks").innerHTML = "";
+
+        if (tasks.length === 0) {
+
+            document.getElementById("todoTasks").innerHTML =
+                `<div class="empty">No tasks yet.</div>`;
+
+            return;
+
+        }
+
+
+        tasks.forEach(task => {
+
+            const card =
+                createTaskCard(task);
+
+            if (task.status === "todo") {
+
+                document
+                    .getElementById("todoTasks")
+                    .appendChild(card);
+
+            } else if (
+                task.status === "in_progress"
+            ) {
+
+                document
+                    .getElementById("progressTasks")
+                    .appendChild(card);
+
+            } else {
+
+                document
+                    .getElementById("completedTasks")
+                    .appendChild(card);
+
+            }
+
+        });
+
+    }
+
+
+    function createTaskCard(task) {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "task";
+
+        const priority =
+            (task.priority || "Medium").toLowerCase();
+
+        let assignedText =
+            "Unassigned";
+
+        if (task.assigned_name) {
+
+            assignedText =
+                `${task.assigned_name}`;
+
+        }
+
+        div.innerHTML = `
+
+            <h4>
+                ${escapeHTML(task.title)}
+            </h4>
+
+            <span class="badge ${priority}">
+                ${escapeHTML(task.priority || "Medium")}
+            </span>
+
+            <div class="task-description">
+                ${escapeHTML(
+                    task.description || "No description"
+                )}
+            </div>
+
+            <div class="task-info">
+                👤 Assigned:
+                <strong>
+                    ${escapeHTML(assignedText)}
+                </strong>
+            </div>
+
+            ${
+                task.due_date
+                ? `
+                <div class="task-info">
+                    📅 Due:
+                    ${escapeHTML(task.due_date)}
+                </div>
+                `
+                : ""
+            }
+
+            <div class="task-buttons">
+
+                ${
+                    task.status !== "in_progress"
+                    ? `
+                    <button
+                        class="warning-btn"
+                        onclick="changeStatus(${task.id}, 'in_progress')">
+                        ⚙️ Progress
+                    </button>
+                    `
+                    : ""
+                }
+
+                ${
+                    task.status !== "completed"
+                    ? `
+                    <button
+                        class="success-btn"
+                        onclick="changeStatus(${task.id}, 'completed')">
+                        ✅ Complete
+                    </button>
+                    `
+                    : ""
+                }
+
+                ${
+                    task.status !== "todo"
+                    ? `
+                    <button
+                        class="info-btn"
+                        onclick="changeStatus(${task.id}, 'todo')">
+                        📝 To Do
+                    </button>
+                    `
+                    : ""
+                }
+
+                <button
+                    class="info-btn"
+                    onclick="openEditTask(${task.id})">
+                    ✏️ Edit
+                </button>
+
+                <button
+                    class="danger-btn"
+                    onclick="deleteTask(${task.id})">
+                    🗑️ Delete
+                </button>
+
+                <button
+                    class="comment-btn"
+                    onclick="toggleComments(${task.id})">
+                    💬 Comments
+                </button>
+
+            </div>
+
+            <div
+                class="comments"
+                id="comments-${task.id}"
+                style="display:none;">
+
+                <div id="commentList-${task.id}">
+                    Loading comments...
+                </div>
+
+                <textarea
+                    class="comment-input"
+                    id="commentInput-${task.id}"
+                    placeholder="Write a comment...">
+                </textarea>
+
+                <button
+                    class="comment-btn"
+                    onclick="addComment(${task.id})">
+                    Send Comment
+                </button>
+
+            </div>
+
+        `;
+
+        return div;
+
+    }
+
+
+    async function createTask() {
+
+        if (!selectedProject) {
+
+            showMessage(
+                "taskMessage",
+                "Please select a project first.",
+                "error"
+            );
+
+            return;
+
+        }
+
+        const title =
+            document.getElementById("taskTitle").value.trim();
+
+        const description =
+            document.getElementById("taskDescription").value.trim();
+
+        const assignedTo =
+            document.getElementById("taskAssignedTo").value;
+
+        const priority =
+            document.getElementById("taskPriority").value;
+
+        const dueDate =
+            document.getElementById("taskDueDate").value;
+
+
+        if (!title) {
+
+            showMessage(
+                "taskMessage",
+                "Task title is required.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const response =
+            await fetch("/api/tasks", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    project_id: selectedProject.id,
+
+                    title,
+
+                    description,
+
+                    assigned_to:
+                        assignedTo
+                        ? Number(assignedTo)
+                        : null,
+
+                    priority,
+
+                    due_date:
+                        dueDate || null
+
+                })
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            showMessage(
+                "taskMessage",
+                data.message,
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        document.getElementById("taskTitle").value = "";
+        document.getElementById("taskDescription").value = "";
+        document.getElementById("taskAssignedTo").value = "";
+        document.getElementById("taskPriority").value = "Medium";
+        document.getElementById("taskDueDate").value = "";
+
+
+        showMessage(
+            "taskMessage",
+            "Task added successfully.",
+            "success"
+        );
+
+
+        await loadTasks();
+
+    }
+
+
+    async function changeStatus(taskId, status) {
+
+        const response =
+            await fetch(
+                `/api/tasks/${taskId}/status`,
+                {
+
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        status
+                    })
+
+                }
+            );
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+
+            alert(data.message);
+            return;
+
+        }
+
+        await loadTasks();
+
+    }
+
+
+    async function deleteTask(taskId) {
+
+        if (
+            !confirm(
+                "Are you sure you want to delete this task?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const response =
+            await fetch(
+                `/api/tasks/${taskId}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            alert(data.message);
+            return;
+
+        }
+
+
+        await loadTasks();
+
+    }
+
+
+    // =========================
+    // EDIT TASK
+    // =========================
+
+    function openEditTask(taskId) {
+
+        const task =
+            tasks.find(
+                t => t.id === taskId
+            );
+
+        if (!task) {
+            return;
+        }
+
+        document.getElementById(
+            "editTaskId"
+        ).value = task.id;
+
+        document.getElementById(
+            "editTaskTitle"
+        ).value = task.title || "";
+
+        document.getElementById(
+            "editTaskDescription"
+        ).value = task.description || "";
+
+        document.getElementById(
+            "editTaskAssignedTo"
+        ).value =
+            task.assigned_to || "";
+
+        document.getElementById(
+            "editTaskPriority"
+        ).value =
+            task.priority || "Medium";
+
+        document.getElementById(
+            "editTaskDueDate"
+        ).value =
+            task.due_date || "";
+
+        document.getElementById(
+            "editTaskModal"
+        ).style.display = "block";
+
+    }
+
+
+    function closeEditTaskModal() {
+
+        document.getElementById(
+            "editTaskModal"
+        ).style.display = "none";
+
+    }
+
+
+    async function updateTask() {
+
+        const taskId =
+            document.getElementById(
+                "editTaskId"
+            ).value;
+
+        const title =
+            document.getElementById(
+                "editTaskTitle"
+            ).value.trim();
+
+        const description =
+            document.getElementById(
+                "editTaskDescription"
+            ).value.trim();
+
+        const assignedTo =
+            document.getElementById(
+                "editTaskAssignedTo"
+            ).value;
+
+        const priority =
+            document.getElementById(
+                "editTaskPriority"
+            ).value;
+
+        const dueDate =
+            document.getElementById(
+                "editTaskDueDate"
+            ).value;
+
+
+        if (!title) {
+
+            alert("Task title is required.");
+            return;
+
+        }
+
+
+        const response =
+            await fetch(
+                `/api/tasks/${taskId}`,
+                {
+
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        title,
+
+                        description,
+
+                        assigned_to:
+                            assignedTo
+                            ? Number(assignedTo)
+                            : null,
+
+                        priority,
+
+                        due_date:
+                            dueDate || null
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            alert(data.message);
+            return;
+
+        }
+
+
+        closeEditTaskModal();
+
+        await loadTasks();
+
+    }
+
+
+    // =========================
+    // COMMENTS
+    // =========================
+
+    async function toggleComments(taskId) {
+
+        const box =
+            document.getElementById(
+                `comments-${taskId}`
+            );
+
+        if (
+            box.style.display === "none"
+        ) {
+
+            box.style.display = "block";
+
+            await loadComments(taskId);
+
+        } else {
+
+            box.style.display = "none";
+
+        }
+
+    }
+
+
+    async function loadComments(taskId) {
+
+        const container =
+            document.getElementById(
+                `commentList-${taskId}`
+            );
+
+        try {
+
+            const response =
+                await fetch(
+                    `/api/comments?task_id=${taskId}`
+                );
+
+            const data =
+                await response.json();
+
+            if (!data.success) {
+
+                container.innerHTML =
+                    `<div class="empty">
+                        ${data.message}
+                    </div>`;
+
+                return;
+
+            }
+
+            if (data.comments.length === 0) {
+
+                container.innerHTML =
+                    `<div class="empty">
+                        No comments yet.
+                    </div>`;
+
+                return;
+
+            }
+
+            container.innerHTML = "";
+
+            data.comments.forEach(comment => {
+
+                const div =
+                    document.createElement("div");
+
+                div.className = "comment";
+
+                div.innerHTML = `
+
+                    <strong>
+                        👤 ${escapeHTML(comment.user_name)}
+                    </strong>
+
+                    <div>
+                        ${escapeHTML(comment.comment)}
+                    </div>
+
+                    <small>
+                        ${escapeHTML(comment.created_at)}
+                    </small>
+
+                    ${
+                        currentUser &&
+                        comment.user_id === currentUser.id
+                        ? `
+                        <br>
+                        <button
+                            class="danger-btn"
+                            style="margin-top:5px;padding:4px 8px;font-size:11px;"
+                            onclick="deleteComment(${comment.id}, ${taskId})">
+                            Delete
+                        </button>
+                        `
+                        : ""
+                    }
+
+                `;
+
+                container.appendChild(div);
+
+            });
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    async function addComment(taskId) {
+
+        const input =
+            document.getElementById(
+                `commentInput-${taskId}`
+            );
+
+        const comment =
+            input.value.trim();
+
+        if (!comment) {
+
+            alert("Comment cannot be empty.");
+            return;
+
+        }
+
+
+        const response =
+            await fetch("/api/comments", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    task_id: taskId,
+
+                    comment
+
+                })
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            alert(data.message);
+            return;
+
+        }
+
+
+        input.value = "";
+
+        await loadComments(taskId);
+
+    }
+
+
+    async function deleteComment(
+        commentId,
+        taskId
+    ) {
+
+        if (
+            !confirm(
+                "Delete this comment?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const response =
+            await fetch(
+                `/api/comments/${commentId}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!data.success) {
+
+            alert(data.message);
+            return;
+
+        }
+
+
+        await loadComments(taskId);
+
+    }
+
+
+    // =========================
+    // NOTIFICATIONS
+    // =========================
+
+    async function loadNotifications() {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/notifications"
+                );
+
+            const data =
+                await response.json();
+
+            if (!data.success) {
+                return;
+            }
+
+            renderNotifications(
+                data.notifications
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+
+    function renderNotifications(
+        notifications
+    ) {
+
+        const container =
+            document.getElementById(
+                "notificationsList"
+            );
+
+        const count =
+            notifications.filter(
+                n => n.is_read === 0
+            ).length;
+
+
+        const countElement =
+            document.getElementById(
+                "notificationCount"
+            );
+
+
+        if (count > 0) {
+
+            countElement.style.display =
+                "inline-block";
+
+            countElement.textContent =
+                count;
+
+        } else {
+
+            countElement.style.display =
+                "none";
+
+        }
+
+
+        if (
+            notifications.length === 0
+        ) {
+
+            container.innerHTML =
+                `<div class="empty">
+                    No notifications
+                </div>`;
+
+            return;
+
+        }
+
+
+        container.innerHTML = "";
+
+
+        notifications.forEach(notification => {
+
+            const div =
+                document.createElement("div");
+
+            div.className =
+                "notification" +
+                (
+                    notification.is_read === 0
+                    ? " unread"
+                    : ""
+                );
+
+
+            div.innerHTML = `
+
+                <div>
+                    🔔
+                    ${escapeHTML(notification.message)}
+                </div>
+
+                <small>
+                    ${escapeHTML(notification.created_at)}
+                </small>
+
+                <div class="notification-actions">
+
+                    ${
+                        notification.is_read === 0
+                        ? `
+                        <button
+                            class="success-btn"
+                            onclick="markNotificationRead(${notification.id})">
+                            Mark Read
+                        </button>
+                        `
+                        : ""
+                    }
+
+                    <button
+                        class="danger-btn"
+                        onclick="deleteNotification(${notification.id})">
+                        Delete
+                    </button>
+
+                </div>
+
+            `;
+
+            container.appendChild(div);
+
+        });
+
+    }
+
+
+    function toggleNotifications() {
+
+        const panel =
+            document.getElementById(
+                "notificationPanel"
+            );
+
+        if (
+            panel.style.display === "block"
+        ) {
+
+            panel.style.display = "none";
+
+        } else {
+
+            panel.style.display = "block";
+
+            loadNotifications();
+
+        }
+
+    }
+
+
+    async function markNotificationRead(
+        notificationId
+    ) {
+
+        await fetch(
+            `/api/notifications/${notificationId}/read`,
+            {
+                method: "PUT"
+            }
+        );
+
+        await loadNotifications();
+
+    }
+
+
+    async function deleteNotification(
+        notificationId
+    ) {
+
+        await fetch(
+            `/api/notifications/${notificationId}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        await loadNotifications();
+
+    }
+
+
+    async function clearNotifications() {
+
+        const response =
+            await fetch(
+                "/api/notifications"
+            );
+
+        const data =
+            await response.json();
+
+        if (!data.success) {
+            return;
+        }
+
+
+        for (
+            const notification
+            of data.notifications
+        ) {
+
+            await fetch(
+                `/api/notifications/${notification.id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+        }
+
+
+        await loadNotifications();
+
+    }
+
+
+    // =========================
+    // REAL-TIME NOTIFICATION
+    // =========================
+
+    socket.on(
+        "new_notification",
+        function(data) {
+
+            alert(
+                "🔔 " +
+                data.message
+            );
+
+            loadNotifications();
+
+        }
+    );
+
+
+    // =========================
+    // LOGOUT
+    // =========================
+
+    async function logout() {
+
+        await fetch(
+            "/api/logout",
+            {
+                method: "POST"
+            }
+        );
+
+        window.location.href =
+            "/login";
+
+    }
+
+
+    // =========================
+    // HELPERS
+    // =========================
+
+    function showMessage(
+        id,
+        text,
+        type
+    ) {
+
+        const element =
+            document.getElementById(id);
+
+        element.textContent = text;
+
+        element.className =
+            `message ${type}`;
+
+        setTimeout(() => {
+
+            element.className =
+                "message";
+
+        }, 3000);
+
+    }
+
+
+    function escapeHTML(value) {
+
+        if (value === null ||
+            value === undefined) {
+
+            return "";
+
+        }
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+
+        const memberModal =
+            document.getElementById(
+                "memberModal"
+            );
+
+        const editModal =
+            document.getElementById(
+                "editTaskModal"
+            );
+
+        if (event.target === memberModal) {
+
+            closeMemberModal();
+
+        }
+
+        if (event.target === editModal) {
+
+            closeEditTaskModal();
+
+        }
+
+    };
+
+
+    // START
+    init();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Project Management Tool</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        /* HEADER */
+
+        header {
+            background: #1f2937;
+            color: white;
+            padding: 15px 25px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            gap: 15px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .create-project-btn {
+            background: #2563eb;
+            color: white;
+        }
+
+        .logout-btn {
+            background: #dc2626;
+            color: white;
+        }
+
+        /* CONTAINER */
+
+        .container {
+            padding: 25px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+        }
+
+        .welcome h2 {
+            margin-bottom: 5px;
+        }
+
+        .welcome p {
+            color: #666;
+        }
+
+        /* PROJECT FORM */
+
+        .project-form {
+            display: none;
+
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-form h2 {
+            margin-top: 0;
+        }
+
+        .project-form label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 11px;
+            margin-bottom: 15px;
+
+            border: 1px solid #ccc;
+            border-radius: 6px;
+
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .save-project {
+            background: #16a34a;
+            color: white;
+        }
+
+        .cancel-project {
+            background: #6b7280;
+            color: white;
+            margin-left: 8px;
+        }
+
+        /* PROJECTS */
+
+        .projects-section {
+            margin-bottom: 35px;
+        }
+
+        .projects-section h2 {
+            margin-bottom: 15px;
+        }
+
+        .projects {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fill,
+                    minmax(260px, 1fr)
+                );
+
+            gap: 15px;
+        }
+
+        .project-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.08);
+
+            cursor: pointer;
+
+            transition: 0.2s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-3px);
+
+            box-shadow:
+                0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .project-card h3 {
+            margin-top: 0;
+            color: #2563eb;
+        }
+
+        .project-card p {
+            color: #555;
+            line-height: 1.5;
+        }
+
+        .project-id {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .click-text {
+            margin-top: 15px;
+            color: #2563eb;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .no-projects {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            color: #777;
+            text-align: center;
+        }
+
+        /* TASK SECTION */
+
+        .task-section {
+            margin-top: 20px;
+        }
+
+        .tools {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tools input {
+            margin: 0;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .tools select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+
+        /* BOARD */
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .column {
+            background: #e5e7eb;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 300px;
+        }
+
+        .column h3 {
+            margin-top: 0;
+        }
+
+        /* TASK */
+
+        .task {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+
+            cursor: grab;
+
+            box-shadow:
+                0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .task:active {
+            cursor: grabbing;
+        }
+
+        .task h4 {
+            margin: 0 0 8px;
+        }
+
+        .task p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .edit-btn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #dc2626;
+            color: white;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 800px) {
+
+            .board {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-buttons {
+                width: 100%;
+            }
+
+            .header-buttons button {
+                flex: 1;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- HEADER -->
+
+<header>
+
+    <h1>
+        📋 Project Management Tool
+    </h1>
+
+    <div class="header-buttons">
+
+        <button
+            class="create-project-btn"
+            onclick="showProjectForm()"
+        >
+            + Create Project
+        </button>
+
+        <button
+            class="logout-btn"
+            onclick="logout()"
+        >
+            Logout
+        </button>
+
+    </div>
+
+</header>
+
+
+<div class="container">
+
+
+    <!-- WELCOME -->
+
+    <div class="welcome">
+
+        <h2 id="welcomeText">
+            Welcome!
+        </h2>
+
+        <p>
+            Manage your projects and tasks easily.
+        </p>
+
+    </div>
+
+
+    <!-- CREATE PROJECT FORM -->
+
+    <div
+        class="project-form"
+        id="projectForm"
+    >
+
+        <h2>
+            ➕ Create New Project
+        </h2>
+
+        <label>
+            Project Name
+        </label>
+
+        <input
+            type="text"
+            id="projectName"
+            placeholder="Enter project name"
+        >
+
+        <label>
+            Description
+        </label>
+
+        <textarea
+            id="projectDescription"
+            placeholder="Enter project description"
+        ></textarea>
+
+        <button
+            class="save-project"
+            onclick="createProject()"
+        >
+            Save Project
+        </button>
+
+        <button
+            class="cancel-project"
+            onclick="hideProjectForm()"
+        >
+            Cancel
+        </button>
+
+    </div>
+
+
+    <!-- PROJECTS -->
+
+    <div class="projects-section">
+
+        <h2>
+            📁 My Projects
+        </h2>
+
+        <div
+            class="projects"
+            id="projectsContainer"
+        >
+
+            <div class="no-projects">
+                Loading projects...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TASK BOARD -->
+
+    <div class="task-section">
+
+        <h2>
+            📋 Task Board
+        </h2>
+
+        <div class="tools">
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search tasks..."
+                oninput="renderTasks()"
+            >
+
+            <select
+                id="priorityFilter"
+                onchange="renderTasks()"
+            >
+
+                <option value="all">
+                    All Priorities
+                </option>
+
+                <option value="High">
+                    High
+                </option>
+
+                <option value="Medium">
+                    Medium
+                </option>
+
+                <option value="Low">
+                    Low
+                </option>
+
+            </select>
+
+            <button
+                onclick="addTask()"
+                class="create-project-btn"
+            >
+                + Add Task
+            </button>
+
+        </div>
+
+
+        <div class="board">
+
+
+            <!-- TO DO -->
+
+            <div
+                class="column"
+                id="todo"
+                ondrop="drop(event, 'todo')"
+                ondragover="allowDrop(event)"
+            >
+
+                <h3>
+                    📝 To Do
+                </h3>
+
+            </div>
+
+
+            <!-- IN PROGRESS -->
+
+            <div
+                class="column"
+                id="progress"
+                ondrop="drop(event, 'progress')"
+                ondragover="allowDrop(event)"
+            >
+
+                <h3>
+                    ⚙️ In Progress
+                </h3>
+
+            </div>
+
+
+            <!-- DONE -->
+
+            <div
+                class="column"
+                id="done"
+                ondrop="drop(event, 'done')"
+                ondragover="allowDrop(event)"
+            >
+
+                <h3>
+                    ✅ Done
+                </h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+// ===============================
+// CHECK LOGIN
+// ===============================
+
+async function checkLogin() {
+
+    try {
+
+        const response =
+            await fetch("/api/me");
+
+        const data =
+            await response.json();
+
+
+        if (!data.loggedIn) {
+
+            window.location.href =
+                "/login";
+
+            return;
+
+        }
+
+
+        document.getElementById(
+            "welcomeText"
+        ).textContent =
+            "Welcome, " +
+            data.user.name +
+            "!";
+
+
+    } catch (error) {
+
+        console.error(
+            "Login check error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ===============================
+// LOGOUT
+// ===============================
+
+async function logout() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/logout",
+                {
+                    method: "POST"
+                }
+            );
+
+        const data =
+            await response.json();
+
+
+        if (data.success) {
+
+            localStorage.removeItem(
+                "loggedInUser"
+            );
+
+            window.location.href =
+                "/login";
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Logout failed."
+        );
+
+    }
+
+}
+
+
+// ===============================
+// SHOW PROJECT FORM
+// ===============================
+
+function showProjectForm() {
+
+    document.getElementById(
+        "projectForm"
+    ).style.display = "block";
+
+
+    document.getElementById(
+        "projectName"
+    ).focus();
+
+}
+
+
+// ===============================
+// HIDE PROJECT FORM
+// ===============================
+
+function hideProjectForm() {
+
+    document.getElementById(
+        "projectForm"
+    ).style.display = "none";
+
+
+    document.getElementById(
+        "projectName"
+    ).value = "";
+
+
+    document.getElementById(
+        "projectDescription"
+    ).value = "";
+
+}
+
+
+// ===============================
+// CREATE PROJECT
+// ===============================
+
+async function createProject() {
+
+    const name =
+        document.getElementById(
+            "projectName"
+        ).value.trim();
+
+
+    const description =
+        document.getElementById(
+            "projectDescription"
+        ).value.trim();
+
+
+    if (!name) {
+
+        alert(
+            "Please enter project name."
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/projects",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        name: name,
+
+                        description:
+                            description
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            alert(
+                data.message ||
+                "Failed to create project."
+            );
+
+            return;
+
+        }
+
+
+        alert(
+            "Project created successfully! 🎉"
+        );
+
+
+        hideProjectForm();
+
+        loadProjects();
+
+
+    } catch (error) {
+
+        console.error(
+            "Create project error:",
+            error
+        );
+
+        alert(
+            "Something went wrong."
+        );
+
+    }
+
+}
+
+
+// ===============================
+// LOAD PROJECTS
+// ===============================
+
+async function loadProjects() {
+
+    const container =
+        document.getElementById(
+            "projectsContainer"
+        );
+
+
+    container.innerHTML = `
+        <div class="no-projects">
+            Loading projects...
+        </div>
+    `;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/projects"
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            container.innerHTML = `
+                <div class="no-projects">
+                    ${
+                        data.message ||
+                        "Failed to load projects."
+                    }
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        if (
+            !data.projects ||
+            data.projects.length === 0
+        ) {
+
+            container.innerHTML = `
+                <div class="no-projects">
+                    No projects yet.
+                    <br><br>
+                    Click
+                    <b>+ Create Project</b>
+                    to create your first project.
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        container.innerHTML = "";
+
+
+        data.projects.forEach(
+            project => {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                card.className =
+                    "project-card";
+
+
+                // CLICK PROJECT
+                card.onclick =
+                    function() {
+
+                        window.location.href =
+                            "/project.html?id=" +
+                            project.id;
+
+                    };
+
+
+                card.innerHTML = `
+
+                    <h3>
+                        📁
+                        ${escapeHtml(
+                            project.name
+                        )}
+                    </h3>
+
+                    <p>
+                        ${
+                            project.description
+                                ? escapeHtml(
+                                    project.description
+                                )
+                                : "No description"
+                        }
+                    </p>
+
+                    <div class="project-id">
+                        Project ID:
+                        ${project.id}
+                    </div>
+
+                    <div class="click-text">
+                        Click to open project →
+                    </div>
+
+                `;
+
+
+                container.appendChild(
+                    card
+                );
+
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Load projects error:",
+            error
+        );
+
+
+        container.innerHTML = `
+            <div class="no-projects">
+                Unable to load projects.
+                <br>
+                Please try again.
+            </div>
+        `;
+
+    }
+
+}
+
+
+// ===============================
+// ESCAPE HTML
+// ===============================
+
+function escapeHtml(text) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.textContent =
+        text || "";
+
+    return div.innerHTML;
+
+}
+
+
+// ===============================
+// TASK DATA
+// ===============================
+
+let tasks =
+    JSON.parse(
+        localStorage.getItem(
+            "tasks"
+        )
+    ) || [];
+
+
+// ===============================
+// ADD TASK
+// ===============================
+
+function addTask() {
+
+    const name =
+        prompt(
+            "Enter task name:"
+        );
+
+
+    if (!name) {
+
+        return;
+
+    }
+
+
+    const description =
+        prompt(
+            "Enter task description:"
+        ) || "";
+
+
+    const assigned =
+        prompt(
+            "Assign task to:"
+        ) || "";
+
+
+    let priority =
+        prompt(
+            "Priority (High/Medium/Low):"
+        ) || "Medium";
+
+
+    priority =
+        priority.trim();
+
+
+    if (
+        priority !== "High" &&
+        priority !== "Medium" &&
+        priority !== "Low"
+    ) {
+
+        priority = "Medium";
+
+    }
+
+
+    const task = {
+
+        id: Date.now(),
+
+        name: name,
+
+        description:
+            description,
+
+        assigned:
+            assigned,
+
+        priority:
+            priority,
+
+        status:
+            "todo"
+
+    };
+
+
+    tasks.push(task);
+
+    saveTasks();
+
+    renderTasks();
+
+}
+
+
+// ===============================
+// SAVE TASKS
+// ===============================
+
+function saveTasks() {
+
+    localStorage.setItem(
+        "tasks",
+        JSON.stringify(tasks)
+    );
+
+}
+
+
+// ===============================
+// RENDER TASKS
+// ===============================
+
+function renderTasks() {
+
+    document.getElementById(
+        "todo"
+    ).innerHTML =
+        "<h3>📝 To Do</h3>";
+
+
+    document.getElementById(
+        "progress"
+    ).innerHTML =
+        "<h3>⚙️ In Progress</h3>";
+
+
+    document.getElementById(
+        "done"
+    ).innerHTML =
+        "<h3>✅ Done</h3>";
+
+
+    const search =
+        document.getElementById(
+            "searchInput"
+        ).value.toLowerCase();
+
+
+    const priority =
+        document.getElementById(
+            "priorityFilter"
+        ).value;
+
+
+    tasks
+        .filter(task => {
+
+            const taskName =
+                (
+                    task.name || ""
+                ).toLowerCase();
+
+
+            const taskDescription =
+                (
+                    task.description || ""
+                ).toLowerCase();
+
+
+            const taskAssigned =
+                (
+                    task.assigned || ""
+                ).toLowerCase();
+
+
+            const matchesSearch =
+                taskName.includes(search) ||
+                taskDescription.includes(search) ||
+                taskAssigned.includes(search);
+
+
+            const matchesPriority =
+                priority === "all" ||
+                task.priority === priority;
+
+
+            return (
+                matchesSearch &&
+                matchesPriority
+            );
+
+        })
+
+
+        .forEach(task => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "task";
+
+
+            card.draggable =
+                true;
+
+
+            card.ondragstart =
+                function(event) {
+
+                    event.dataTransfer.setData(
+                        "taskId",
+                        task.id
+                    );
+
+                };
+
+
+            card.innerHTML = `
+
+                <h4>
+                    ${escapeHtml(
+                        task.name
+                    )}
+                </h4>
+
+                <p>
+                    ${escapeHtml(
+                        task.description
+                    )}
+                </p>
+
+                <p>
+                    👤
+                    ${
+                        escapeHtml(
+                            task.assigned
+                        ) ||
+                        "Unassigned"
+                    }
+                </p>
+
+                <p>
+                    ⭐ Priority:
+                    ${escapeHtml(
+                        task.priority
+                    )}
+                </p>
+
+                <div class="task-actions">
+
+                    <button
+                        class="edit-btn"
+                        onclick="editTask(${task.id})"
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        class="delete-btn"
+                        onclick="deleteTask(${task.id})"
+                    >
+                        Delete
+                    </button>
+
+                </div>
+
+            `;
+
+
+            const column =
+                document.getElementById(
+                    task.status
+                );
+
+
+            if (column) {
+
+                column.appendChild(
+                    card
+                );
+
+            }
+
+        });
+
+}
+
+
+// ===============================
+// EDIT TASK
+// ===============================
+
+function editTask(id) {
+
+    const task =
+        tasks.find(
+            task =>
+                task.id === id
+        );
+
+
+    if (!task) {
+
+        return;
+
+    }
+
+
+    const newName =
+        prompt(
+            "Task name:",
+            task.name
+        );
+
+
+    if (!newName) {
+
+        return;
+
+    }
+
+
+    task.name =
+        newName.trim();
+
+
+    saveTasks();
+
+    renderTasks();
+
+}
+
+
+// ===============================
+// DELETE TASK
+// ===============================
+
+function deleteTask(id) {
+
+    if (
+        !confirm(
+            "Delete this task?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    tasks =
+        tasks.filter(
+            task =>
+                task.id !== id
+        );
+
+
+    saveTasks();
+
+    renderTasks();
+
+}
+
+
+// ===============================
+// DRAG & DROP
+// ===============================
+
+function allowDrop(event) {
+
+    event.preventDefault();
+
+}
+
+
+function drop(event, status) {
+
+    event.preventDefault();
+
+
+    const id =
+        Number(
+            event.dataTransfer.getData(
+                "taskId"
+            )
+        );
+
+
+    const task =
+        tasks.find(
+            task =>
+                task.id === id
+        );
+
+
+    if (task) {
+
+        task.status =
+            status;
+
+        saveTasks();
+
+        renderTasks();
+
+    }
+
+}
+
+
+// ===============================
+// START
+// ===============================
+
+checkLogin();
+
+loadProjects();
+
+renderTasks();
+
+</script>
+
+
+</body>
+
+</html>

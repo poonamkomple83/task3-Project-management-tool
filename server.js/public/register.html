@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Register - Project Management Tool</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            width: 100%;
+            max-width: 430px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2563eb;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 17px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .register-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .login-text {
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }
+
+        .login-text a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .message {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="register-container">
+
+    <div class="logo">📋</div>
+
+    <h1>Create Account</h1>
+
+    <p class="subtitle">
+        Register for Project Management Tool
+    </p>
+
+    <form onsubmit="registerUser(event)">
+
+        <div class="form-group">
+            <label for="name">Full Name</label>
+
+            <input
+                type="text"
+                id="name"
+                placeholder="Enter your full name"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email</label>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Create a password"
+                minlength="6"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword">
+                Confirm Password
+            </label>
+
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Confirm your password"
+                minlength="6"
+                required
+            >
+        </div>
+
+        <button
+            type="submit"
+            class="register-btn"
+            id="registerBtn"
+        >
+            👤 Create Account
+        </button>
+
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <p class="login-text">
+        Already have an account?
+        <a href="/login.html">Login</a>
+    </p>
+
+</div>
+
+
+<script>
+
+async function registerUser(event) {
+
+    event.preventDefault();
+
+    const name =
+        document.getElementById("name").value.trim();
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+    const message =
+        document.getElementById("message");
+
+    const registerBtn =
+        document.getElementById("registerBtn");
+
+
+    // Check passwords
+    if (password !== confirmPassword) {
+
+        message.innerText =
+            "❌ Passwords do not match.";
+
+        message.style.color = "red";
+
+        return;
+    }
+
+
+    // Check password length
+    if (password.length < 6) {
+
+        message.innerText =
+            "❌ Password must be at least 6 characters.";
+
+        message.style.color = "red";
+
+        return;
+    }
+
+
+    registerBtn.disabled = true;
+
+    registerBtn.innerText =
+        "Creating Account...";
+
+
+    try {
+
+        const response = await fetch(
+            "/api/register",
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    password: password
+                })
+            }
+        );
+
+
+        const data =
+            await response.json();
+
+
+        if (response.ok) {
+
+            message.innerText =
+                "✅ Account created successfully!";
+
+            message.style.color = "green";
+
+            registerBtn.innerText =
+                "Account Created";
+
+
+            // Go to login page
+            setTimeout(() => {
+
+                window.location.href =
+                    "/login.html";
+
+            }, 1500);
+
+        } else {
+
+            message.innerText =
+                "❌ " + data.message;
+
+            message.style.color = "red";
+
+            registerBtn.disabled = false;
+
+            registerBtn.innerText =
+                "👤 Create Account";
+        }
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.innerText =
+            "❌ Server connection failed.";
+
+        message.style.color = "red";
+
+        registerBtn.disabled = false;
+
+        registerBtn.innerText =
+            "👤 Create Account";
+    }
+
+}
+
+</script>
+
+</body>
+</html>
